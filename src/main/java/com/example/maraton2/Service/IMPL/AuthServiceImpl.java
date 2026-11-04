@@ -5,6 +5,7 @@ import com.example.maraton2.Dto.AUTH.LoginRequestDTO;
 import com.example.maraton2.Dto.AUTH.RegistroRequestDTO;
 import com.example.maraton2.Entity.Usuario;
 import com.example.maraton2.Repository.UsuarioRepository;
+import com.example.maraton2.Security.JwtTokenProvider;
 import com.example.maraton2.Service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +17,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     public AuthResponseDTO registrar(RegistroRequestDTO dto) {
@@ -33,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
         usuarioRepository.save(usuario);
 
 
-        String token = "TOKEN_JWT_GENERADO";
+        String token = jwtTokenProvider.generarToken(usuario.getEmail());
 
         return AuthResponseDTO.builder()
                 .token(token)
@@ -52,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Credenciales inválidas");
         }
 
-        String token = "TOKEN_JWT_GENERADO"; // jwtTokenProvider.generateToken(usuario.getEmail());
+        String token = jwtTokenProvider.generarToken(usuario.getEmail());
 
         return AuthResponseDTO.builder()
                 .token(token)
