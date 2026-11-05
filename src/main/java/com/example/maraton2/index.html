@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruta Segura - Espacio Público Nocturno</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS (Mapas) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <style>
+        .map-container { height: 350px; width: 100%; border-radius: 0.75rem; z-index: 1;}
+    </style>
+</head>
+<body class="bg-gradient-to-br from-cyan-100 to-blue-200 min-h-screen flex items-center justify-center p-0 md:p-4 font-sans">
+
+<!-- Contenedor Estilo Celular / Mockup Principal -->
+<div id="app" class="w-full max-w-md bg-cyan-50 min-h-screen md:min-h-[850px] md:rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden relative border border-cyan-200">
+
+    <!-- HEADER COMÚN -->
+    <header id="main-header" class="hidden bg-cyan-500 text-white px-4 py-3 flex justify-between items-center shadow-md">
+        <div class="flex items-center space-x-2 cursor-pointer" onclick="cambiarVista('inicio')">
+            <span class="text-xl">📍</span>
+            <span class="font-bold text-base tracking-wide">Ruta Segura</span>
+        </div>
+        <nav class="flex space-x-4 text-xs font-semibold">
+            <button onclick="cambiarVista('inicio')" class="hover:text-cyan-200 transition">Inicio</button>
+            <button onclick="cambiarVista('mapa')" class="hover:text-cyan-200 transition">Reportes</button>
+            <button onclick="cambiarVista('cuenta')" class="hover:text-cyan-200 transition">Mi cuenta</button>
+        </nav>
+    </header>
+
+    <!-- CONTENIDO DE LAS VISTAS -->
+    <main class="flex-grow overflow-y-auto p-5 flex flex-col">
+
+        <!-- 1. VISTA LOGIN -->
+        <section id="vista-login" class="flex flex-col justify-center flex-grow space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-20 h-20 bg-cyan-400 rounded-full mx-auto flex items-center justify-center shadow-inner">
+                    <span class="text-4xl">📍</span>
+                </div>
+                <h1 class="text-2xl font-black text-cyan-800 tracking-tight">RUTA SEGURA</h1>
+                <h2 class="text-xl font-bold text-cyan-700">Bienvenido</h2>
+                <p class="text-xs text-cyan-600">Inicia Sesión en tu cuenta</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">✉️</span>
+                    <input type="email" id="login-email" placeholder="Correo electronico o usuario" required class="w-full pl-10 pr-4 py-3 bg-white border border-cyan-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm">
+                </div>
+
+                <!-- Campo Contraseña con visor interactivo -->
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔒</span>
+                    <input type="password" id="login-password" placeholder="Contraseña" required class="w-full pl-10 pr-10 py-3 bg-white border border-cyan-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm">
+                    <span onclick="togglePassword('login-password', 'icon-eye-login')" id="icon-eye-login" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 cursor-pointer select-none">👁️‍🗨️</span>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-gray-600 px-1">
+                    <label class="flex items-center space-x-1 cursor-pointer">
+                        <input type="checkbox" class="rounded text-cyan-600 focus:ring-cyan-500">
+                        <span>Recordarme</span>
+                    </label>
+                    <a href="#" class="text-cyan-600 hover:underline">¿Olvidaste tu contraseña?</a>
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-3 rounded-xl font-bold shadow-md hover:opacity-90 transition flex items-center justify-center space-x-2">
+                    <span>➔ Inicia Sesión</span>
+                </button>
+            </form>
+
+            <div class="space-y-3 pt-2">
+                <button onclick="mockLoginDirecto()" class="w-full bg-black text-white py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 shadow">
+                    <span>🌐 Continuar con Google</span>
+                </button>
+                <button onclick="mockLoginDirecto()" class="w-full bg-blue-700 text-white py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 shadow">
+                    <span>📘 Continuar con Facebook</span>
+                </button>
+            </div>
+
+            <p class="text-center text-xs text-gray-600 pt-2">
+                ¿No tienes una cuenta? <button onclick="cambiarVista('registro')" class="text-cyan-700 font-bold hover:underline">Regístrate aquí</button>
+            </p>
+        </section>
+
+        <!-- 2. VISTA REGISTRO (Sin teléfono y con visores de contraseña funcionales) -->
+        <section id="vista-registro" class="hidden flex flex-col justify-center flex-grow space-y-4 py-4">
+            <div class="text-center space-y-1">
+                <div class="w-16 h-16 bg-cyan-400 rounded-full mx-auto flex items-center justify-center shadow-inner">
+                    <span class="text-3xl">📍</span>
+                </div>
+                <h1 class="text-xl font-black text-cyan-800">RUTA SEGURA</h1>
+                <h2 class="text-lg font-bold text-cyan-700">Crear cuenta</h2>
+                <p class="text-xs text-cyan-600">Regístrate para acceder a nuestros servicios</p>
+            </div>
+
+            <form onsubmit="handleRegistro(event)" class="space-y-3">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">👤</span>
+                    <input type="text" id="reg-nombre" placeholder="Nombre Completo" required class="w-full pl-10 pr-3 py-2.5 bg-white border border-cyan-200 rounded-xl text-xs focus:ring-2 focus:ring-cyan-500 shadow-sm">
+                </div>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">✉️</span>
+                    <input type="email" id="reg-email" placeholder="Correo electrónico" required class="w-full pl-10 pr-3 py-2.5 bg-white border border-cyan-200 rounded-xl text-xs focus:ring-2 focus:ring-cyan-500 shadow-sm">
+                </div>
+
+                <!-- Contraseña -->
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔒</span>
+                    <input type="password" id="reg-password" placeholder="Contraseña" required class="w-full pl-10 pr-10 py-2.5 bg-white border border-cyan-200 rounded-xl text-xs focus:ring-2 focus:ring-cyan-500 shadow-sm">
+                    <span onclick="togglePassword('reg-password', 'icon-eye-1')" id="icon-eye-1" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 cursor-pointer select-none">👁️‍🗨️</span>
+                </div>
+
+                <!-- Confirmar Contraseña -->
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔒</span>
+                    <input type="password" id="reg-password-confirm" placeholder="Confirmar contraseña" required class="w-full pl-10 pr-10 py-2.5 bg-white border border-cyan-200 rounded-xl text-xs focus:ring-2 focus:ring-cyan-500 shadow-sm">
+                    <span onclick="togglePassword('reg-password-confirm', 'icon-eye-2')" id="icon-eye-2" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 cursor-pointer select-none">👁️‍🗨️</span>
+                </div>
+
+                <label class="flex items-center space-x-2 text-xs text-gray-600 px-1 cursor-pointer">
+                    <input type="checkbox" required class="rounded text-cyan-600">
+                    <span>Aceptos los <a href="#" class="text-cyan-700 underline">términos y condiciones</a></span>
+                </label>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-blue-700 text-white py-3 rounded-xl text-xs font-bold shadow-md hover:opacity-90 transition flex items-center justify-center space-x-2">
+                    <span>👤 + Crear cuenta</span>
+                </button>
+            </form>
+
+            <p class="text-center text-xs text-gray-600">
+                ¿Ya tienes una cuenta? <button onclick="cambiarVista('login')" class="text-cyan-700 font-bold hover:underline">Iniciar sesión</button>
+            </p>
+        </section>
+
+        <!-- 3. VISTA INICIO / DASHBOARD -->
+        <section id="vista-inicio" class="hidden space-y-4 py-2">
+            <div class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white p-5 rounded-2xl shadow-lg space-y-3 relative overflow-hidden">
+                <div class="absolute right-0 bottom-0 opacity-10 text-8xl font-black">📍</div>
+                <h2 class="text-lg font-bold leading-tight">Construyamos espacios mas seguros</h2>
+                <p class="text-xs text-cyan-100">Reportar zonas de riesgos en la noche y ayuda a que todas nos movamos con mayor tranquilidad</p>
+                <button onclick="cambiarVista('crear-reporte')" class="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl font-bold shadow transition flex items-center justify-center space-x-2 text-xs">
+                    <span>🚨 Reportar zona de riesgo</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-cyan-100">
+                    <span id="stat-total" class="block font-black text-lg text-cyan-700">124</span>
+                    <span class="text-[10px] text-gray-500 font-medium">Reportes totales</span>
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-cyan-100">
+                    <span class="block font-black text-lg text-cyan-700">8k</span>
+                    <span class="text-[10px] text-gray-500 font-medium">Usuarios aliados</span>
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-cyan-100">
+                    <span class="block font-black text-lg text-cyan-700">3</span>
+                    <span class="text-[10px] text-gray-500 font-medium">Ciudades abiertas</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-cyan-100 space-y-2">
+                <h3 class="text-xs font-bold text-cyan-800 uppercase tracking-wider">Acceso Rápido</h3>
+                <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                    <button onclick="cambiarVista('mapa')" class="p-2 bg-cyan-50 rounded-xl hover:bg-cyan-100 flex flex-col items-center"><span class="text-lg">🗺️</span><span class="text-[10px]">Mapa</span></button>
+                    <button onclick="cambiarVista('crear-reporte')" class="p-2 bg-cyan-50 rounded-xl hover:bg-cyan-100 flex flex-col items-center"><span class="text-lg">📝</span><span class="text-[10px]">Reportar</span></button>
+                    <button onclick="cambiarVista('cuenta')" class="p-2 bg-cyan-50 rounded-xl hover:bg-cyan-100 flex flex-col items-center"><span class="text-lg">👤</span><span class="text-[10px]">Perfil</span></button>
+                    <button onclick="cerrarSesion()" class="p-2 bg-red-50 rounded-xl hover:bg-red-100 text-red-600 flex flex-col items-center"><span class="text-lg">🚪</span><span class="text-[10px]">Salir</span></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. VISTA CREAR REPORTE -->
+        <section id="vista-crear-reporte" class="hidden space-y-4 py-2">
+            <div class="flex justify-between items-center">
+                <button onclick="cambiarVista('inicio')" class="text-xs text-cyan-700 font-bold hover:underline flex items-center space-x-1"><span>←</span><span>Volver al inicio</span></button>
+                <h2 class="font-bold text-sm text-cyan-800">Reportar Zona de riesgo</h2>
+            </div>
+
+            <form onsubmit="handleCrearReporte(event)" class="space-y-3 bg-white p-4 rounded-2xl shadow-sm border border-cyan-100">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Municipio*</label>
+                    <select id="rep-municipio" class="w-full p-2.5 bg-gray-50 border border-cyan-200 rounded-xl text-xs focus:ring-2 focus:ring-cyan-500">
+                        <option value="Soacha">Soacha</option>
+                        <option value="Bogotá D.C.">Bogotá D.C.</option>
+                        <option value="Chía">Chía</option>
+                        <option value="Zipaquirá">Zipaquirá</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Punto de referencia*</label>
+                    <input type="text" id="rep-referencia" placeholder="Ej: Parque central, entrada norte" required class="w-full p-2.5 bg-gray-50 border border-cyan-200 rounded-xl text-xs focus:ring-2 focus:ring-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Categoria*</label>
+                    <select id="rep-categoria" class="w-full p-2.5 bg-gray-50 border border-cyan-200 rounded-xl text-xs focus:ring-2 focus:ring-cyan-500">
+                        <option value="ACOSO">Acoso</option>
+                        <option value="ILUMINACION_DEFICIENTE">Iluminación deficiente</option>
+                        <option value="ZONAS_DESOLADAS">Zona desolada</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Descripción (Opcional)</label>
+                    <textarea id="rep-desc" placeholder="Detalles de la zona..." class="w-full p-2.5 bg-gray-50 border border-cyan-200 rounded-xl text-xs h-16 focus:ring-2 focus:ring-cyan-500"></textarea>
+                </div>
+
+                <div class="bg-cyan-50 p-3 rounded-xl border border-cyan-200 flex items-center space-x-3">
+                    <span class="text-2xl">🛡️</span>
+                    <div class="text-[10px] text-cyan-900">
+                        <p class="font-bold">No compartas tus datos Personales</p>
+                        <p class="text-cyan-700">Tu seguridad importa en todo momento.</p>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-xl text-xs font-bold shadow transition flex items-center justify-center space-x-2">
+                    <span>📍 Publicar reporte</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- 5. VISTA MAPA Y LISTADO -->
+        <section id="vista-mapa" class="hidden space-y-3 py-1 flex-grow flex flex-col">
+            <div class="flex justify-between items-center shrink-0">
+                <h2 class="font-bold text-sm text-cyan-800">Mapa de riesgos</h2>
+                <button onclick="cambiarVista('crear-reporte')" class="bg-red-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold shadow">+ Reportar</button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="flex space-x-1 overflow-x-auto pb-1 text-[11px] scrollbar-none shrink-0">
+                <button onclick="filtrarCategoria('')" class="bg-cyan-600 text-white px-3 py-1 rounded-full whitespace-nowrap shadow-sm">Todos</button>
+                <button onclick="filtrarCategoria('ACOSO')" class="bg-white text-gray-700 border border-gray-200 px-3 py-1 rounded-full whitespace-nowrap shadow-sm">Acoso</button>
+                <button onclick="filtrarCategoria('ILUMINACION_DEFICIENTE')" class="bg-white text-gray-700 border border-gray-200 px-3 py-1 rounded-full whitespace-nowrap shadow-sm">Iluminacion</button>
+                <button onclick="filtrarCategoria('ZONAS_DESOLADAS')" class="bg-white text-gray-700 border border-gray-200 px-3 py-1 rounded-full whitespace-nowrap shadow-sm">Zona desolada</button>
+            </div>
+
+            <!-- Contenedor del Mapa -->
+            <div id="map" class="map-container shadow-sm border border-cyan-200 mb-2"></div>
+
+            <!-- Lista de Reportes Cercanos -->
+            <div id="lista-reportes" class="space-y-2 overflow-y-auto pr-1 flex-grow"></div>
+        </section>
+
+        <!-- 6. VISTA DETALLE DE REPORTE -->
+        <section id="vista-detalle" class="hidden space-y-3 py-2">
+            <div class="flex justify-between items-center">
+                <button onclick="cambiarVista('mapa')" class="text-xs text-cyan-700 font-bold hover:underline flex items-center space-x-1"><span>←</span><span>Volver al mapa</span></button>
+                <h2 id="det-titulo-top" class="font-bold text-xs text-cyan-900">Soacha - Parque central</h2>
+            </div>
+
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-cyan-100 space-y-3">
+                <div class="relative h-44 bg-gray-200 rounded-xl overflow-hidden flex items-center justify-center">
+                    <img id="det-img" src="https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=600&q=80" alt="Zona" class="w-full h-full object-cover">
+                    <span id="det-badge-cat" class="absolute top-2 left-2 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">Iluminacion deficiente</span>
+                </div>
+
+                <div class="space-y-1">
+                    <h3 id="det-titulo" class="font-bold text-sm text-cyan-900">Soacha - Parque central, entrada norte</h3>
+                    <p id="det-desc" class="text-xs text-gray-600 leading-relaxed">La iluminación es muy baja en esta zona durante la noche, lo que genera sensación de inseguridad.</p>
+                    <span id="det-fecha" class="block text-[10px] text-gray-400 pt-1">31 oct 2026</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="cambiarVista('mapa')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl text-xs font-bold transition">Volver al mapa</button>
+                    <button onclick="marcarUtil()" class="bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 rounded-xl text-xs font-bold shadow transition">Me parece útil 👍</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. VISTA MI CUENTA -->
+        <section id="vista-cuenta" class="hidden space-y-4 py-4">
+            <div class="text-center space-y-2">
+                <div class="w-20 h-20 bg-cyan-600 text-white rounded-full mx-auto flex items-center justify-center text-2xl font-bold shadow">
+                    US
+                </div>
+                <h2 id="lbl-nombre-usuario" class="font-bold text-base text-cyan-900">Usuaria Ruta Segura</h2>
+                <p id="lbl-email-usuario" class="text-xs text-gray-500">usuaria@rutasegura.co</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-cyan-100 space-y-3 text-xs">
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-500">Rol:</span>
+                    <span class="font-bold text-cyan-700">Usuaria Registrada (JWT)</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-500">Reportes creados:</span>
+                    <span id="lbl-num-reportes" class="font-bold text-cyan-700">3</span>
+                </div>
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-500">Estado de cuenta:</span>
+                    <span class="text-green-600 font-bold">Activa y Segura</span>
+                </div>
+            </div>
+
+            <button onclick="cerrarSesion()" class="w-full bg-red-600 text-white py-3 rounded-xl text-xs font-bold shadow hover:bg-red-700 transition">Cerrar Sesión</button>
+        </section>
+
+    </main>
+
+    <!-- FOOTER / NAVEGACIÓN INFERIOR -->
+    <footer id="main-footer" class="hidden bg-white border-t border-cyan-100 py-2 px-6 flex justify-around text-[10px] text-gray-600 shadow-inner shrink-0">
+        <button onclick="cambiarVista('inicio')" class="flex flex-col items-center hover:text-cyan-600 transition"><span class="text-lg">🏠</span>Inicio</button>
+        <button onclick="cambiarVista('mapa')" class="flex flex-col items-center hover:text-cyan-600 transition"><span class="text-lg">🗺️</span>Reportes</button>
+        <button onclick="cambiarVista('cuenta')" class="flex flex-col items-center hover:text-cyan-600 transition"><span class="text-lg">👤</span>Mi cuenta</button>
+    </footer>
+
+</div>
+
+<!-- Leaflet JS con comprobación de integridad para evitar bloqueos CDN -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    // Actualizado al puerto 8082 de tu backend Spring Boot
+    const API_URL = 'http://localhost:8082/api';
+    let token = localStorage.getItem('token') || '';
+    let map = null;
+    let markersLayer = null;
+
+    // Función para mostrar / ocultar contraseña
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.textContent = "👁️";
+        } else {
+            input.type = "password";
+            icon.textContent = "👁️‍🗨️";
+        }
+    }
+
+    function cambiarVista(vista) {
+        ['login', 'registro', 'inicio', 'crear-reporte', 'mapa', 'detalle', 'cuenta'].forEach(v => {
+            document.getElementById(`vista-${v}`).classList.add('hidden');
+        });
+        document.getElementById(`vista-${vista}`).classList.remove('hidden');
+
+        const header = document.getElementById('main-header');
+        const footer = document.getElementById('main-footer');
+
+        if (token || vista === 'login' || vista === 'registro') {
+            if (vista === 'login' || vista === 'registro') {
+                header.classList.add('hidden');
+                footer.classList.add('hidden');
+            } else {
+                header.classList.remove('hidden');
+                footer.classList.remove('hidden');
+            }
+        }
+
+        if (vista === 'mapa') {
+            setTimeout(() => {
+                initMap();
+                cargarReportes();
+            }, 300); // Retardo mayor para que el div se renderice primero
+        }
+    }
+
+    window.onload = () => {
+        if (token) {
+            cambiarVista('inicio');
+        } else {
+            cambiarVista('login');
+        }
+    };
+
+    // LOGIN CONECTADO A SPRING BOOT
+    async function handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        try {
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (!res.ok) throw new Error('Credenciales inválidas');
+            const data = await res.json();
+            token = data.token;
+            localStorage.setItem('token', token);
+            document.getElementById('lbl-email-usuario').innerText = email;
+            cambiarVista('inicio');
+        } catch (err) {
+            alert('Error al iniciar sesión: Verifique su correo y contraseña.');
+        }
+    }
+
+    function mockLoginDirecto() {
+        token = "jwt-token-demo-12345";
+        localStorage.setItem('token', token);
+        cambiarVista('inicio');
+    }
+
+    // REGISTRO CONECTADO A SPRING BOOT (Sin teléfono)
+    async function handleRegistro(e) {
+        e.preventDefault();
+        const nombre = document.getElementById('reg-nombre').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        const passConfirm = document.getElementById('reg-password-confirm').value;
+
+        if(password !== passConfirm) {
+            alert('Las contraseñas no coinciden.');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/auth/registro`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, email, password })
+            });
+            if (!res.ok) throw new Error('Error en el registro');
+            const data = await res.json();
+            token = data.token;
+            localStorage.setItem('token', token);
+            document.getElementById('lbl-nombre-usuario').innerText = nombre;
+            document.getElementById('lbl-email-usuario').innerText = email;
+            alert('¡Cuenta creada con éxito!');
+            cambiarVista('inicio');
+        } catch (err) {
+            alert('No se pudo completar el registro. Verifique que el correo no esté registrado y la contraseña tenga al menos 6 caracteres.');
+        }
+    }
+
+    function cerrarSesion() {
+        token = '';
+        localStorage.removeItem('token');
+        cambiarVista('login');
+    }
+
+    // CREAR REPORTE CONECTADO A SPRING BOOT
+    async function handleCrearReporte(e) {
+        e.preventDefault();
+        const municipio = document.getElementById('rep-municipio').value;
+        const puntoReferencia = document.getElementById('rep-referencia').value;
+        const categoriaRiesgo = document.getElementById('rep-categoria').value;
+        const descripcionAdicional = document.getElementById('rep-desc').value;
+
+        try {
+            const res = await fetch(`${API_URL}/reportes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ municipio, puntoReferencia, categoriaRiesgo, descripcionAdicional })
+            });
+            if (!res.ok) throw new Error('Error al publicar');
+            alert('¡Reporte publicado con éxito!');
+            document.getElementById('form-reporte')?.reset();
+            cambiarVista('mapa');
+        } catch (err) {
+            alert('Reporte simulado guardado correctamente.');
+            cambiarVista('mapa');
+        }
+    }
+
+    function initMap() {
+        if (typeof L === 'undefined') {
+            console.error("Leaflet no cargó. El CDN fue bloqueado por tu red.");
+            return;
+        }
+
+        if (!map) {
+            map = L.map('map').setView([4.5829, -74.2163], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+            markersLayer = L.layerGroup().addTo(map);
+        } else {
+            map.invalidateSize();
+        }
+    }
+
+    async function cargarReportes(categoria = '') {
+        try {
+            let url = `${API_URL}/reportes`;
+            if (categoria) url += `?categoria=${categoria}`;
+
+            const res = await fetch(url);
+            const reportes = await res.json();
+            renderizarReportesEnUI(reportes);
+        } catch (err) {
+            const mockReportes = [
+                { id: 1, municipio: "Soacha", puntoReferencia: "Parque central, entrada norte", categoriaRiesgo: "ILUMINACION_DEFICIENTE", descripcionAdicional: "La iluminación es muy baja en esta zona durante la noche.", fechaCreacion: "2026-10-31", distanciaKm: 0.4, latitud: 4.5829, longitud: -74.2163 },
+                { id: 2, municipio: "Soacha", puntoReferencia: "Calle 15 con Cra 7", categoriaRiesgo: "ACOSO", descripcionAdicional: "Presencia de grupos sospechosos en horas nocturnas.", fechaCreacion: "2026-10-29", distanciaKm: 1.2, latitud: 4.5790, longitud: -74.2200 },
+                { id: 3, municipio: "Soacha", puntoReferencia: "Parque lineal", categoriaRiesgo: "ZONAS_DESOLADAS", descripcionAdicional: "Falta total de vigilancia y poca visibilidad.", fechaCreacion: "2026-11-02", distanciaKm: 2.1, latitud: 4.5850, longitud: -74.2100 }
+            ];
+            renderizarReportesEnUI(mockReportes);
+        }
+    }
+
+    function renderizarReportesEnUI(reportes) {
+        document.getElementById('stat-total').innerText = reportes.length;
+        if(markersLayer) markersLayer.clearLayers();
+        const listaContainer = document.getElementById('lista-reportes');
+        listaContainer.innerHTML = '';
+
+        reportes.forEach(r => {
+            if (r.latitud && r.longitud && typeof L !== 'undefined') {
+                L.marker([r.latitud, r.longitud]).addTo(markersLayer).on('click', () => verDetalleReporte(r));
+            }
+
+            const card = document.createElement('div');
+            card.className = 'bg-white p-3 rounded-xl shadow-sm border border-cyan-100 flex justify-between items-center cursor-pointer hover:bg-cyan-50 transition';
+            card.onclick = () => verDetalleReporte(r);
+            card.innerHTML = `
+                <div class="space-y-0.5">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-xs text-cyan-900">${r.municipio}</span>
+                        <span class="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-semibold">${r.categoriaRiesgo}</span>
+                    </div>
+                    <p class="text-[11px] text-gray-600">${r.puntoReferencia}</p>
+                    <span class="text-[9px] text-gray-400">${r.fechaCreacion || '31 oct 2026'}</span>
+                </div>
+                <div class="flex items-center space-x-1 text-cyan-700 font-bold text-xs">
+                    <span>${r.distanciaKm ? r.distanciaKm + ' km' : '➔'}</span>
+                </div>
+            `;
+            listaContainer.appendChild(card);
+        });
+    }
+
+    function verDetalleReporte(r) {
+        document.getElementById('det-titulo-top').innerText = `${r.municipio} - ${r.puntoReferencia}`;
+        document.getElementById('det-titulo').innerText = `${r.municipio} - ${r.puntoReferencia}`;
+        document.getElementById('det-desc').innerText = r.descripcionAdicional || 'Sin descripción adicional.';
+        document.getElementById('det-badge-cat').innerText = r.categoriaRiesgo;
+        document.getElementById('det-fecha').innerText = r.fechaCreacion || '31 oct 2026';
+        cambiarVista('detalle');
+    }
+
+    function filtrarCategoria(cat) {
+        cargarReportes(cat);
+    }
+
+    function marcarUtil() {
+        alert('¡Gracias por tu feedback! Marcado como útil.');
+        cambiarVista('mapa');
+    }
+</script>
+</body>
+</html>

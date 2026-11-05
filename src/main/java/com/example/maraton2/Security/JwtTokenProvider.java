@@ -1,22 +1,16 @@
 package com.example.maraton2.Security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
-
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
-
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-
-    private final long jwtExpirationDate = 86400000;
-
+    private final long jwtExpirationDate = 86400000; // 24 horas
 
     public String generarToken(String email) {
         Date fechaActual = new Date();
@@ -38,7 +32,6 @@ public class JwtTokenProvider {
                 .getBody();
         return claims.getSubject();
     }
-
 
     public boolean validarToken(String token) {
         try {
